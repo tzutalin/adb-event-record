@@ -98,7 +98,7 @@ class AdbEventRecorder(object):
                         raise OSError('sendevent failed')
 
             if repeat == False:
-                continue
+                break
 
 
 def main(*args):
