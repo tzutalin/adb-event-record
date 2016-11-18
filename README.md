@@ -20,22 +20,27 @@ git clone https://github.com/tzutalin/adb-event-record.git
 
 Store the event to record.log and record the /dev/input/event4 only
 ```
-./adb-record.py -r record.log -n 4
+./adbrecord.py -r record.log -n 4
 ```
 
 Store all of the events to record.log
 ```
-./adb-record.py -r record.log
+./adbrecord.py -r record.log
 ```
 
 * Playback
 
 Repeat to play the record events
 ```
-./adb-record.py -p record.log --repeat
+./adbrecord.py -p record.log --repeat
 ```
 
 Play the record events without repeating
 ```
-./adb-record.py -p record.log
+./adbrecord.py -p record.log
+```
+
+Go to com.tzutalin.test.main Activity, and play the record events without repeating
+```
+./adbrecord.py -p record.log --activity com.tzutalin.test.main
 ```
