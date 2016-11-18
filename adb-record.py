@@ -36,11 +36,19 @@ class AdbEventRecorder(object):
         self.adb_command = adb
         self.adb_shell_command = adb + [b'shell']
 
-    def Push(self, src, dst):
+    def push(self, src, dst):
         if subprocess.call(self.adb_command + [b'push', src, dst]) != 0:
             raise OSError('push failed')
 
-    def showEvent(self):
+    def goToActivity(self, activity):
+        if subprocess.call(self.adb_shell_command + [b'am', b'start', b'-a', activity]) != 0:
+            raise OSError('push failed')
+
+    def checkPermission(self):
+        if subprocess.call(self.adb_command + [b'root']) != 0:
+            raise OSError('Insufficient permissions')
+
+    def displayAllEvents(self):
         adb = subprocess.Popen(self.adb_shell_command + [b'getevent'], stdin=PIPE, stdout=PIPE,
                                stderr=PIPE)
 
@@ -48,7 +56,8 @@ class AdbEventRecorder(object):
             try:
                 millis = int(round(time.time() * 1000))
                 line = adb.stdout.readline().decode('utf-8', 'replace').strip()
-                print "%s %s" % (millis, line)
+                if len(line) != 0:
+                    print "%s %s" % (millis, line)
             except KeyboardInterrupt:
                 break
             if len(line) == 0:
@@ -113,12 +122,16 @@ def main(*args):
                              'Corresponds to the "-d" option of adb.')
     parser.add_argument('--repeat', action='store_true',
                         help='Repeat to play the events.')
+    parser.add_argument('--show', action='store_true',
+                        help='Show all of the events from the device')
     parser.add_argument('-n', '--event', type=str,
                         help='The event number, n, to record /dev/input/event[n]')
     parser.add_argument('-r', '--record', type=str,
                         help='Store the record data to the file')
     parser.add_argument('-p', '--play', type=str,
                         help='Play the record data')
+    parser.add_argument('--activity', type=str,
+                        help='Go the activity when play the record events')
 
     args = parser.parse_args()
     args_encoding = locale.getdefaultlocale()[1]
@@ -127,15 +140,27 @@ def main(*args):
         adb += [b'-d']
 
     adb_recorder = AdbEventRecorder(adb)
-
     if args.record:
         print 'Start to record..'
+        adb_recorder.checkPermission()
+        if args.event:
+            print 'Record event' + args.event
+
+        print 'Store to ' + args.record
         adb_recorder.record(args.record, args.event)
-
-    if args.play and os.path.exists(args.play):
+    elif args.play and os.path.exists(args.play):
         print 'Start to play.. Repeat:' + str(args.repeat)
-        adb_recorder.play(args.play, args.repeat)
+        if args.activity:
+            print 'Go to the activity:' + args.activity
+            adb_recorder.goToActivity(args.activity)
 
+        adb_recorder.play(args.play, args.repeat)
+    elif args.show:
+        adb_recorder.checkPermission()
+        adb_recorder.displayAllEvents()
+    else:
+        print 'Add -r [Path] to record'
+        print 'Add -p [Path] to play'
 
 if __name__ == '__main__':
     main(*sys.argv)
