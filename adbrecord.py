@@ -48,8 +48,19 @@ class AdbEventRecorder(object):
         if subprocess.call(self.adb_command + [b'root']) != 0:
             raise OSError('Insufficient permissions')
 
+    def listAllEvent(self):
+        adb = subprocess.Popen(self.adb_shell_command + [b'getevent', '-i'], stdin=PIPE, stdout=PIPE,
+                               stderr=PIPE)
+        while adb.poll() is None:
+            try:
+                line = adb.stdout.readline().decode('utf-8', 'replace').strip()
+                if len(line) != 0:
+                    print "%s" % (line)
+            except KeyboardInterrupt:
+                break
+
     def displayAllEvents(self):
-        adb = subprocess.Popen(self.adb_shell_command + [b'getevent'], stdin=PIPE, stdout=PIPE,
+        adb = subprocess.Popen(self.adb_shell_command + [b'getevent', '-r', '-q'], stdin=PIPE, stdout=PIPE,
                                stderr=PIPE)
 
         while adb.poll() is None:
@@ -140,6 +151,7 @@ def main(*args):
         adb += [b'-d']
 
     adb_recorder = AdbEventRecorder(adb)
+    adb_recorder.listAllEvent()
     if args.record:
         print 'Start to record..'
         adb_recorder.checkPermission()

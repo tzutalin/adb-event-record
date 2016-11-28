@@ -16,11 +16,21 @@ git clone https://github.com/tzutalin/adb-event-record.git
 
 ### Usage
 
+* Show all events on your device
+
+```
+./adbrecord.py --show
+```
+
+![](demo/demo.png)
+
 * Record
 
 Store the event to record.log and record the /dev/input/event4 only
 ```
 ./adbrecord.py -r record.log -n 4
+
+n=4 is my touch input event
 ```
 
 Store all of the events to record.log
