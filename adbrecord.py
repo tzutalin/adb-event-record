@@ -25,11 +25,29 @@ import sys
 import os
 import time
 
-__version__ = '1.0.0'
+__version__ = '1.0.1'
 
 EVENT_LINE_RE = re.compile(r"(\S+): (\S+) (\S+) (\S+)$")
 STORE_LINE_RE = re.compile(r"(\S+) (\S+) (\S+) (\S+) (\S+)$")
 
+class Colors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+def dlog(msg):
+    print(str(msg))
+
+def ilog(msg):
+    print(Colors.OKBLUE + str(msg) + Colors.ENDC)
+
+def elog(msg):
+    print(Colors.FAIL + str(msg) + Colors.ENDC)
 
 class AdbEventRecorder(object):
     def __init__(self, adb):
@@ -41,21 +59,24 @@ class AdbEventRecorder(object):
             raise OSError('push failed')
 
     def goToActivity(self, activity):
+        ilog('Go to the activity:' + activity)
         if subprocess.call(self.adb_shell_command + [b'am', b'start', b'-a', activity]) != 0:
             raise OSError('push failed')
 
     def checkPermission(self):
+        ilog('Checking permission')
         if subprocess.call(self.adb_command + [b'root']) != 0:
             raise OSError('Insufficient permissions')
 
     def listAllEvent(self):
+        ilog('List all events')
         adb = subprocess.Popen(self.adb_shell_command + [b'getevent', '-i'], stdin=PIPE, stdout=PIPE,
                                stderr=PIPE)
         while adb.poll() is None:
             try:
                 line = adb.stdout.readline().decode('utf-8', 'replace').strip()
                 if len(line) != 0:
-                    print "%s" % (line)
+                    dlog(line)
             except KeyboardInterrupt:
                 break
 
@@ -68,13 +89,14 @@ class AdbEventRecorder(object):
                 millis = int(round(time.time() * 1000))
                 line = adb.stdout.readline().decode('utf-8', 'replace').strip()
                 if len(line) != 0:
-                    print "%s %s" % (millis, line)
+                    dlog("{} {}".format(millis, line))
             except KeyboardInterrupt:
                 break
             if len(line) == 0:
                 break
 
     def record(self, fpath, eventNum=None):
+        ilog('Start recording')
         record_command = self.adb_shell_command + [b'getevent']
         adb = subprocess.Popen(record_command,
                                stdin=PIPE, stdout=PIPE,
@@ -93,14 +115,18 @@ class AdbEventRecorder(object):
                         continue
                     ## Write to the file
                     etype, ecode, data = int(etype, 16), int(ecode, 16), int(data, 16)
-                    outputFile.write("%s %s %s %s %s\n" % (millis, dev, etype, ecode, data))
+                    rline = "%s %s %s %s %s\n" % (millis, dev, etype, ecode, data)
+                    dlog(rline)
+                    outputFile.write(rline)
             except KeyboardInterrupt:
                 break
             if len(line) == 0:
                 break
         outputFile.close()
+        ilog('End recording')
 
     def play(self, fpath, repeat=False):
+        ilog('Start playing')
         while True:
             lastTs = None
             with open(fpath) as fp:
@@ -108,18 +134,19 @@ class AdbEventRecorder(object):
                     match = STORE_LINE_RE.match(line.strip())
                     ts, dev, etype, ecode, data = match.groups()
                     ts = float(ts)
-                    if lastTs is not None and (ts - lastTs) > 0:
+                    if lastTs and (ts - lastTs) > 0:
                         delta_second = (ts - lastTs) / 1000
-                        # print delta_second
                         time.sleep(delta_second)
 
                     lastTs = ts
-                    if subprocess.call(self.adb_shell_command + [b'sendevent', dev, etype, ecode, data]) != 0:
+                    cmds = self.adb_shell_command + [b'sendevent', dev, etype, ecode, data]
+                    dlog(cmds)
+                    if subprocess.call(cmds) != 0:
                         raise OSError('sendevent failed')
 
             if repeat == False:
                 break
-
+        ilog('End playing')
 
 def main(*args):
     parser = argparse.ArgumentParser(
@@ -153,26 +180,18 @@ def main(*args):
     adb_recorder = AdbEventRecorder(adb)
     adb_recorder.listAllEvent()
     if args.record:
-        print 'Start to record..'
         adb_recorder.checkPermission()
-        if args.event:
-            print 'Record event' + args.event
-
-        print 'Store to ' + args.record
         adb_recorder.record(args.record, args.event)
     elif args.play and os.path.exists(args.play):
-        print 'Start to play.. Repeat:' + str(args.repeat)
         if args.activity:
-            print 'Go to the activity:' + args.activity
             adb_recorder.goToActivity(args.activity)
-
         adb_recorder.play(args.play, args.repeat)
     elif args.show:
         adb_recorder.checkPermission()
         adb_recorder.displayAllEvents()
     else:
-        print 'Add -r [Path] to record'
-        print 'Add -p [Path] to play'
+        elog('Add -r [Path] to record')
+        elog('Add -p [Path] to play')
 
 if __name__ == '__main__':
     main(*sys.argv)
