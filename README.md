@@ -9,12 +9,42 @@ This script solves that problem by recording device's events like touch event, i
  
 * You need to enable USB debugging mode.
 * Make sure your `adb` can work
-* Clone this project
+* Clone this project or download the python files
 ```
 git clone https://github.com/tzutalin/adb-event-record.git
+
+or 
+
+wget https://raw.githubusercontent.com/tzutalin/adb-event-record/master/adbrecord.py; chmod +x adbrecord.py
 ```
 
 ### Usage
+* Show all functions
+
+```
+./adbrecord.py --help
+
+usage: adbrecord.py [-h] [-e COMMAND] [--device] [--repeat] [--show]
+                    [-n EVENT] [-r RECORD] [-p PLAY] [--activity ACTIVITY]
+
+Record events from an Android device
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -e COMMAND, --adb COMMAND
+                        Use the given adb binary and arguments.
+  --device              Directs command to the only connected USB device;
+                        returns an error if more than one USB device is
+                        present. Corresponds to the "-d" option of adb.
+  --repeat              Repeat to play the events.
+  --show                Show all of the events from the device
+  -n EVENT, --event EVENT
+                        The event number, n, to record /dev/input/event[n]
+  -r RECORD, --record RECORD
+                        Store the record data to the file
+  -p PLAY, --play PLAY  Play the record data
+  --activity ACTIVITY   Go the activity when play the record events
+```
 
 * Show all events on your device
 
