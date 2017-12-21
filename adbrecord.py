@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 '''
-Copyright 2016, Tzutalin
+Copyright 2016-Present, Tzutalin
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
