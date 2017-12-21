@@ -46,6 +46,7 @@ optional arguments:
   --activity ACTIVITY   Go the activity when play the record events
 ```
 
+### Examples
 * Show all events on your device
 
 ```
