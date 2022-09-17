@@ -52,26 +52,26 @@ def elog(msg):
 class AdbEventRecorder(object):
     def __init__(self, adb):
         self.adb_command = adb
-        self.adb_shell_command = adb + [b'shell']
+        self.adb_shell_command = adb + ['shell']
 
     def push(self, src, dst):
-        if subprocess.call(self.adb_command + [b'push', src, dst]) != 0:
+        if subprocess.call(self.adb_command + ['push', src, dst]) != 0:
             raise OSError('push failed')
 
     def goToActivity(self, activity):
         ilog('Go to the activity:' + activity)
-        if subprocess.call(self.adb_shell_command + [b'am', b'start', b'-a', activity]) != 0:
+        if subprocess.call(self.adb_shell_command + ['am', 'start', '-a', activity]) != 0:
             raise OSError('push failed')
 
     def checkPermission(self):
         ilog('Checking permission')
-        if subprocess.call(self.adb_command + [b'root']) != 0:
+        if subprocess.call(self.adb_command + ['root']) != 0:
             raise OSError('Insufficient permissions')
 
     def listAllEvent(self):
         ilog('List all events')
-        adb = subprocess.Popen(self.adb_shell_command + [b'getevent', '-i'], stdin=PIPE, stdout=PIPE,
-                               stderr=PIPE)
+        adb = subprocess.Popen(self.adb_shell_command + ['getevent', '-i'], stdin=PIPE, stdout=PIPE,
+                               stderr=PIPE, shell=True)
         while adb.poll() is None:
             try:
                 line = adb.stdout.readline().decode('utf-8', 'replace').strip()
@@ -81,7 +81,7 @@ class AdbEventRecorder(object):
                 break
 
     def displayAllEvents(self):
-        adb = subprocess.Popen(self.adb_shell_command + [b'getevent', '-r', '-q'], stdin=PIPE, stdout=PIPE,
+        adb = subprocess.Popen(self.adb_shell_command + ['getevent', '-r', '-q'], stdin=PIPE, stdout=PIPE,
                                stderr=PIPE)
 
         while adb.poll() is None:
@@ -97,7 +97,7 @@ class AdbEventRecorder(object):
 
     def record(self, fpath, eventNum=None):
         ilog('Start recording')
-        record_command = self.adb_shell_command + [b'getevent']
+        record_command = self.adb_shell_command + ['getevent']
         adb = subprocess.Popen(record_command,
                                stdin=PIPE, stdout=PIPE,
                                stderr=PIPE)
@@ -139,7 +139,7 @@ class AdbEventRecorder(object):
                         time.sleep(delta_second)
 
                     lastTs = ts
-                    cmds = self.adb_shell_command + [b'sendevent', dev, etype, ecode, data]
+                    cmds = self.adb_shell_command + ['sendevent', dev, etype, ecode, data]
                     dlog(cmds)
                     if subprocess.call(cmds) != 0:
                         raise OSError('sendevent failed')
@@ -172,10 +172,9 @@ def main(*args):
                         help='Go the activity when play the record events')
 
     args = parser.parse_args()
-    args_encoding = locale.getdefaultlocale()[1]
-    adb = args.adb.encode(args_encoding).split(b' ')
+    adb = args.adb.split(' ')
     if args.device:
-        adb += [b'-d']
+        adb += ['-d']
 
     adb_recorder = AdbEventRecorder(adb)
     adb_recorder.listAllEvent()
